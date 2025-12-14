@@ -123,12 +123,14 @@ def test_job_extraction():
                     
                     driver.execute_script("arguments[0].style.backgroundColor = '#90EE90'", card)
                     
+                    job_link = extract_job_link(card)
                     detail_text = extract_job_detail_text(driver)
                     
                     job_data = {
                         "job_index": total_extracted + 1,
                         "page": page_num,
                         "card_index_on_page": i + 1,
+                        "job_link": job_link,
                         "detail_text": detail_text,
                         "extracted_at": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
