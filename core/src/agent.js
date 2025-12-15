@@ -51,11 +51,19 @@ class Agent {
     }
 
     async initialize() {
-        console.log('[init] Starting agent...');
+        if (this.tui) {
+            this.tui.log('Starting agent...', 'info');
+        } else {
+            console.log('[init] Starting agent...');
+        }
 
         // Initialize LLM adapter
         this.llm = createAdapter(this.options.llmProvider);
-        console.log(`[init] LLM: ${this.llm.getModelInfo().model}`);
+        if (this.tui) {
+            this.tui.log(`LLM: ${this.llm.getModelInfo().model}`, 'llm');
+        } else {
+            console.log(`[init] LLM: ${this.llm.getModelInfo().model}`);
+        }
 
         // Use persistent browser profile (like a real human's browser)
         const userDataDir = config.browser.userDataDir || path.join(__dirname, '..', 'data', 'browser-profile');
@@ -65,7 +73,11 @@ class Agent {
             fs.mkdirSync(userDataDir, { recursive: true });
         }
 
-        console.log(`[init] Profile: ${path.basename(userDataDir)}`);
+        if (this.tui) {
+            this.tui.log(`Profile: ${path.basename(userDataDir)}`, 'info');
+        } else {
+            console.log(`[init] Profile: ${path.basename(userDataDir)}`);
+        }
 
         // Launch persistent context (saves cookies, history, localStorage)
         const context = await chromium.launchPersistentContext(userDataDir, {
@@ -89,13 +101,21 @@ class Agent {
         this.page = context.pages()[0] || await context.newPage();
         this.executor = new ActionExecutor(this.page);
 
-        console.log('[init] Browser ready (persistent profile)');
+        if (this.tui) {
+            this.tui.log('Browser ready', 'success');
+        } else {
+            console.log('[init] Browser ready (persistent profile)');
+        }
     }
 
     async close() {
         if (this.browser) {
             await this.browser.close();
-            console.log('[done] Browser closed');
+            if (this.tui) {
+                this.tui.log('Browser closed', 'info');
+            } else {
+                console.log('[done] Browser closed');
+            }
         }
     }
 
@@ -109,7 +129,11 @@ class Agent {
         // Ensure cookies directory exists
         if (!fs.existsSync(this.cookiesDir)) {
             fs.mkdirSync(this.cookiesDir, { recursive: true });
-            console.log('[cookies] Created cookies folder');
+            if (this.tui) {
+                this.tui.log('Created cookies folder', 'cookie');
+            } else {
+                console.log('[cookies] Created cookies folder');
+            }
             return;
         }
 
@@ -118,7 +142,11 @@ class Agent {
             .filter(file => file.endsWith('.json'));
 
         if (cookieFiles.length === 0) {
-            console.log('[cookies] No cookie files in folder');
+            if (this.tui) {
+                this.tui.log('No cookie files found', 'warning');
+            } else {
+                console.log('[cookies] No cookie files in folder');
+            }
             return;
         }
 
@@ -156,7 +184,11 @@ class Agent {
                         }));
 
                         await this.browser.addCookies(cookies);
-                        console.log(`[cookies] ✓ Loaded ${cookies.length} cookies from ${file}`);
+                        if (this.tui) {
+                            this.tui.log(`Loaded ${cookies.length} cookies from ${file}`, 'cookie');
+                        } else {
+                            console.log(`[cookies] ✓ Loaded ${cookies.length} cookies from ${file}`);
+                        }
                         loaded = true;
                     }
                 } catch (error) {
@@ -166,7 +198,11 @@ class Agent {
         }
 
         if (!loaded) {
-            console.log('[cookies] No matching cookie files for goal/url');
+            if (this.tui) {
+                this.tui.log('No matching cookies for goal/url', 'warning');
+            } else {
+                console.log('[cookies] No matching cookie files for goal/url');
+            }
         }
     }
 
@@ -189,8 +225,8 @@ class Agent {
         const tempFile = path.join(tempDir, `page_${this.sessionId}_${Date.now()}.html`);
         fs.writeFileSync(tempFile, html, 'utf8');
 
-        // Simplify HTML
-        const result = simplifyHTML(tempFile);
+        // Simplify HTML (silent when using TUI)
+        const result = simplifyHTML(tempFile, { silent: !!this.tui });
 
         // Clean up temp file with retry (handle file locking)
         setTimeout(() => {

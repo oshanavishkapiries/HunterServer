@@ -491,14 +491,14 @@ function simplifyHTML(inputPath, options = {}) {
     const timestampId = generateTimestampId();
     const inputName = path.basename(absolutePath, path.extname(absolutePath));
 
-    console.log(`[start] html-simplify`);
-    console.log(`[input] ${path.basename(absolutePath)}`);
-    console.log(`[session] ${timestampId}`);
+    log(`[start] html-simplify`);
+    log(`[input] ${path.basename(absolutePath)}`);
+    log(`[session] ${timestampId}`);
 
     // ========================================
     // Step 1: Add IDs to interactive elements
     // ========================================
-    console.log('[step 1] adding IDs to interactive elements');
+    log('[step 1] adding IDs to interactive elements');
 
     const allElements = document.querySelectorAll('*');
     let interactiveCount = 0;
@@ -541,14 +541,14 @@ function simplifyHTML(inputPath, options = {}) {
         }
     });
 
-    console.log(`[added] ${interactiveCount} UUIDs`);
-    console.log(`[skipped] ${hiddenSkipped} hidden`);
-    console.log(`[marked] ${disabledMarked} disabled`);
+    log(`[added] ${interactiveCount} UUIDs`);
+    log(`[skipped] ${hiddenSkipped} hidden`);
+    log(`[marked] ${disabledMarked} disabled`);
 
     // ========================================
     // Step 2: Remove unwanted tags
     // ========================================
-    console.log('[step 2] removing unwanted elements');
+    log('[step 2] removing unwanted elements');
 
     let removedCount = 0;
     CONFIG.tagsToRemove.forEach(tagName => {
@@ -559,46 +559,46 @@ function simplifyHTML(inputPath, options = {}) {
         });
     });
 
-    console.log(`[removed] ${removedCount} unwanted`);
+    log(`[removed] ${removedCount} unwanted`);
 
     // ========================================
     // Step 3: Remove hidden elements
     // ========================================
-    console.log('[step 3] removing hidden elements');
+    log('[step 3] removing hidden elements');
     const hiddenRemoved = removeHiddenElements(document, window);
-    console.log(`[removed] ${hiddenRemoved} hidden`);
+    log(`[removed] ${hiddenRemoved} hidden`);
 
     // ========================================
     // Step 4: Clean attributes
     // ========================================
-    console.log('[step 4] cleaning attributes');
+    log('[step 4] cleaning attributes');
     const remainingElements = document.querySelectorAll('*');
     remainingElements.forEach(element => {
         cleanAttributes(element);
         trimLongAttributes(element);
     });
-    console.log(`[cleaned] ${remainingElements.length} elements`);
+    log(`[cleaned] ${remainingElements.length} elements`);
 
     // ========================================
     // Step 5: Remove HTML comments
     // ========================================
-    console.log('[step 5] removing comments');
+    log('[step 5] removing comments');
     const commentsRemoved = removeComments(document.body);
-    console.log(`[removed] ${commentsRemoved} comments`);
+    log(`[removed] ${commentsRemoved} comments`);
 
     // ========================================
     // Step 6: Clean whitespace
     // ========================================
-    console.log('[step 6] normalizing whitespace');
+    log('[step 6] normalizing whitespace');
     cleanWhitespace(document);
-    console.log(`[done] whitespace normalized`);
+    log(`[done] whitespace normalized`);
 
     // ========================================
     // Step 7: Remove empty containers
     // ========================================
-    console.log('[step 7] removing empty containers');
+    log('[step 7] removing empty containers');
     const emptyRemoved = removeEmptyContainers(document);
-    console.log(`[removed] ${emptyRemoved} empty containers`);
+    log(`[removed] ${emptyRemoved} empty containers`);
 
     // ========================================
     // Generate Output
@@ -632,12 +632,12 @@ ${simplifiedHTML}
     fs.writeFileSync(simplifiedHTMLPath, finalHTML, 'utf8');
     fs.writeFileSync(elementMapPath, JSON.stringify(elementMap, null, 2), 'utf8');
 
-    // Print results
-    console.log(`[output] ${path.relative(projectRoot, simplifiedHTMLPath)}`);
-    console.log(`[output] ${path.relative(projectRoot, elementMapPath)}`);
-    console.log(`[size] ${(htmlContent.length / 1024).toFixed(2)} KB -> ${(finalHTML.length / 1024).toFixed(2)} KB (${(((htmlContent.length - finalHTML.length) / htmlContent.length) * 100).toFixed(1)}% reduction)`);
-    console.log(`[elements] ${Object.keys(elementMap).length} interactive`);
-    console.log(`[done] html-simplify`);
+    // Print results (only if not silent)
+    log(`[output] ${path.relative(projectRoot, simplifiedHTMLPath)}`);
+    log(`[output] ${path.relative(projectRoot, elementMapPath)}`);
+    log(`[size] ${(htmlContent.length / 1024).toFixed(2)} KB -> ${(finalHTML.length / 1024).toFixed(2)} KB (${(((htmlContent.length - finalHTML.length) / htmlContent.length) * 100).toFixed(1)}% reduction)`);
+    log(`[elements] ${Object.keys(elementMap).length} interactive`);
+    log(`[done] html-simplify`);
 
     return {
         sessionId: timestampId,
