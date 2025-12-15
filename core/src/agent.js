@@ -593,52 +593,18 @@ async function main() {
         return true;
     });
 
-    let url = null;
+    let url = 'about:blank';
     let goal = '';
 
-    // Check if first arg is a URL
+    // Check if first arg is an explicit URL (http:// or https://)
     const firstArg = nonFlagArgs[0];
     if (firstArg && (firstArg.startsWith('http://') || firstArg.startsWith('https://'))) {
-        // Legacy mode: URL provided separately
+        // Explicit URL provided
         url = firstArg;
         goal = nonFlagArgs.slice(1).join(' ');
     } else {
-        // New mode: URL embedded in goal
+        // No explicit URL - let LLM handle navigation
         goal = nonFlagArgs.join(' ');
-
-        // Try to extract URL from goal - look for explicit "go to X" patterns first
-        // Skip domains that are part of email addresses (preceded by @)
-        const explicitUrlPattern = /(?:go\s*to|visit|open|navigate\s*to)\s+((?:https?:\/\/)?(?:www\.)?[\w.-]+\.[a-z]{2,}(?:\/[\w.-]*)*)/i;
-        const explicitMatch = goal.match(explicitUrlPattern);
-
-        if (explicitMatch) {
-            let extractedUrl = explicitMatch[1];
-            if (!extractedUrl.startsWith('http')) {
-                extractedUrl = 'https://' + extractedUrl;
-            }
-            url = extractedUrl;
-        } else {
-            // Fallback: look for any domain, but exclude email domains
-            // First remove email addresses from the search text
-            const goalWithoutEmails = goal.replace(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
-            const urlPattern = /((?:https?:\/\/)?(?:www\.)?[\w.-]+\.[a-z]{2,}(?:\/[\w.-]*)*)/i;
-            const match = goalWithoutEmails.match(urlPattern);
-
-            if (match) {
-                let extractedUrl = match[1];
-                if (!extractedUrl.startsWith('http')) {
-                    extractedUrl = 'https://' + extractedUrl;
-                }
-                url = extractedUrl;
-            }
-        }
-    }
-
-    // Default to about:blank if no URL found
-    if (!url) {
-        url = 'about:blank';
-        console.log('⚠️ No URL detected in prompt. Starting with blank page.');
-        console.log('   The agent will navigate based on your goal.\n');
     }
 
     const agent = new Agent({
