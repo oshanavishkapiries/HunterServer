@@ -13,6 +13,7 @@ chromium.use(StealthPlugin());
 const { createAdapter, config } = require('./llm');
 const { parseAction, isTerminal, ActionExecutor } = require('./actions');
 const { simplifyHTML } = require('./scripts/simplify-html');
+const { AgentTUI } = require('./scripts/tui');
 
 class Agent {
     constructor(options = {}) {
@@ -22,6 +23,7 @@ class Agent {
             waitBetweenActions: options.waitBetweenActions ?? config.agent.waitBetweenActions,
             verbose: options.verbose ?? config.agent.verbose,
             llmProvider: options.llmProvider ?? config.defaultProvider,
+            useTUI: options.useTUI ?? true,
             ...options
         };
 
@@ -38,6 +40,9 @@ class Agent {
 
         // Cookies directory
         this.cookiesDir = path.join(__dirname, '..', 'data', 'cookies');
+
+        // TUI
+        this.tui = this.options.useTUI ? new AgentTUI() : null;
     }
 
     generateSessionId() {
@@ -234,36 +239,56 @@ class Agent {
      * @returns {Object} - Execution result
      */
     async run(url, goal) {
-        console.log('\n[agent] Browser Automation Agent');
-        console.log(`[agent] URL: ${url}`);
-        console.log(`[agent] Goal: ${goal}`);
-        console.log(`[agent] Session: ${this.sessionId}\n`);
+        // Use TUI if enabled
+        if (this.tui) {
+            this.tui.start(url, goal);
+            this.tui.maxSteps = this.options.maxSteps;
+        } else {
+            console.log('\n[agent] Browser Automation Agent');
+            console.log(`[agent] URL: ${url}`);
+            console.log(`[agent] Goal: ${goal}`);
+            console.log(`[agent] Session: ${this.sessionId}\n`);
+        }
 
         try {
+            if (this.tui) this.tui.setStatus('initializing');
             await this.initialize();
 
             // Pre-load cookies for domains mentioned in the goal or URL
             await this.preloadCookiesFromGoal(goal, url);
 
             // Navigate to starting URL
-            console.log(`[nav] ${url}`);
+            if (this.tui) {
+                this.tui.log(`Navigating to ${url.substring(0, 50)}...`, 'nav');
+            } else {
+                console.log(`[nav] ${url}`);
+            }
             await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
             await this.page.waitForTimeout(2000); // Wait for page to stabilize
 
             // Autonomous loop
             while (this.currentStep < this.options.maxSteps) {
                 this.currentStep++;
-                console.log(`\n[step ${this.currentStep}/${this.options.maxSteps}]`);
+                if (this.tui) {
+                    this.tui.updateStep(this.currentStep);
+                    this.tui.setStatus('running');
+                } else {
+                    console.log(`\n[step ${this.currentStep}/${this.options.maxSteps}]`);
+                }
 
                 // Get current page state
                 // Get current page state (silent)
                 const pageState = await this.getPageState();
 
                 this.executor.setElementMap(pageState.elementMap);
-                console.log(`  elements: ${Object.keys(pageState.elementMap).length}`);
+                if (this.tui) {
+                    this.tui.printElements(Object.keys(pageState.elementMap).length);
+                } else {
+                    console.log(`  elements: ${Object.keys(pageState.elementMap).length}`);
+                }
 
                 // Get action from LLM
-                // LLM thinking...
+                if (this.tui) this.tui.setStatus('thinking');
                 const context = {
                     goal,
                     simplifiedHtml: pageState.simplifiedHtml,
@@ -275,8 +300,13 @@ class Agent {
                 const rawAction = await this.llm.generateAction(context);
                 const action = parseAction(rawAction, pageState.elementMap);
 
-                console.log(`  action: ${action.action_type}`);
-                console.log(`  reason: ${action.reasoning.substring(0, 100)}${action.reasoning.length > 100 ? '...' : ''}`);
+                if (this.tui) {
+                    this.tui.setStatus('acting');
+                    this.tui.printAction(action.action_type, action.reasoning);
+                } else {
+                    console.log(`  action: ${action.action_type}`);
+                    console.log(`  reason: ${action.reasoning.substring(0, 100)}${action.reasoning.length > 100 ? '...' : ''}`);
+                }
 
                 // Execute action
                 const result = await this.executor.execute(action);
@@ -294,7 +324,12 @@ class Agent {
 
                 // Check for terminal actions
                 if (isTerminal(action.action_type)) {
-                    console.log(`  [done] ${action.action_type}`);
+                    if (this.tui) {
+                        this.tui.setStatus('completed');
+                        this.tui.log(`Task ${action.action_type}`, 'success');
+                    } else {
+                        console.log(`  [done] ${action.action_type}`);
+                    }
 
                     // Capture extracted data and output preferences
                     if (action.extracted_data) {
@@ -372,22 +407,27 @@ class Agent {
         }
 
 
-        console.log('\n[results]');
-        console.log(`  status: ${results.status}`);
-        console.log(`  steps: ${results.totalSteps}`);
-        console.log(`  log: ${path.relative(projectRoot, logPath)}`);
+        // Display results
+        if (this.tui) {
+            this.tui.printResults(results);
+        } else {
+            console.log('\n[results]');
+            console.log(`  status: ${results.status}`);
+            console.log(`  steps: ${results.totalSteps}`);
+            console.log(`  log: ${path.relative(projectRoot, logPath)}`);
 
-        if (results.outputFiles.length > 0) {
-            console.log('  output:');
-            results.outputFiles.forEach(file => {
-                console.log(`    - ${path.relative(projectRoot, file.path)}`);
-            });
-        }
+            if (results.outputFiles.length > 0) {
+                console.log('  output:');
+                results.outputFiles.forEach(file => {
+                    console.log(`    - ${path.relative(projectRoot, file.path)}`);
+                });
+            }
 
-        if (this.extractedData?.summary) {
-            console.log(`  summary: ${this.extractedData.summary}`);
+            if (this.extractedData?.summary) {
+                console.log(`  summary: ${this.extractedData.summary}`);
+            }
+            console.log('');
         }
-        console.log('');
 
         return results;
     }
