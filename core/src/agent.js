@@ -606,17 +606,31 @@ async function main() {
         // New mode: URL embedded in goal
         goal = nonFlagArgs.join(' ');
 
-        // Try to extract URL from goal
-        const urlPattern = /(?:go to|visit|open|navigate to|on|from)?\s*((?:https?:\/\/)?(?:www\.)?[\w.-]+\.[a-z]{2,}(?:\/[\w.-]*)*)/i;
-        const match = goal.match(urlPattern);
+        // Try to extract URL from goal - look for explicit "go to X" patterns first
+        // Skip domains that are part of email addresses (preceded by @)
+        const explicitUrlPattern = /(?:go\s*to|visit|open|navigate\s*to)\s+((?:https?:\/\/)?(?:www\.)?[\w.-]+\.[a-z]{2,}(?:\/[\w.-]*)*)/i;
+        const explicitMatch = goal.match(explicitUrlPattern);
 
-        if (match) {
-            let extractedUrl = match[1];
-            // Add https:// if not present
+        if (explicitMatch) {
+            let extractedUrl = explicitMatch[1];
             if (!extractedUrl.startsWith('http')) {
                 extractedUrl = 'https://' + extractedUrl;
             }
             url = extractedUrl;
+        } else {
+            // Fallback: look for any domain, but exclude email domains
+            // First remove email addresses from the search text
+            const goalWithoutEmails = goal.replace(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
+            const urlPattern = /((?:https?:\/\/)?(?:www\.)?[\w.-]+\.[a-z]{2,}(?:\/[\w.-]*)*)/i;
+            const match = goalWithoutEmails.match(urlPattern);
+
+            if (match) {
+                let extractedUrl = match[1];
+                if (!extractedUrl.startsWith('http')) {
+                    extractedUrl = 'https://' + extractedUrl;
+                }
+                url = extractedUrl;
+            }
         }
     }
 
