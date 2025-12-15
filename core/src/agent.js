@@ -35,6 +35,9 @@ class Agent {
         this.actionLog = [];
         this.extractedData = null;
         this.currentStep = 0;
+
+        // Cookies directory
+        this.cookiesDir = path.join(__dirname, '..', 'data', 'cookies');
     }
 
     generateSessionId() {
@@ -64,16 +67,21 @@ class Agent {
             executablePath: config.browser.chromePath,
             headless: this.options.headless ?? config.browser.headless,
             viewport: { width: 1920, height: 1080 },
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             locale: 'en-US',
             timezoneId: 'Asia/Colombo',
             ignoreHTTPSErrors: true,
             args: [
                 '--disable-blink-features=AutomationControlled',
+                '--disable-automation',
                 '--disable-infobars',
+                '--disable-dev-shm-usage',
                 '--no-first-run',
-                '--no-default-browser-check'
-            ]
+                '--no-default-browser-check',
+                '--no-sandbox',
+                '--disable-setuid-sandbox'
+            ],
+            ignoreDefaultArgs: ['--enable-automation']
         });
 
         // Store context as browser for compatibility
@@ -88,6 +96,77 @@ class Agent {
         if (this.browser) {
             await this.browser.close();
             console.log('[done] Browser closed');
+        }
+    }
+
+    /**
+     * Pre-load cookies by checking if goal or URL contains any cookie filename
+     * Scans cookies folder, if goal/url contains filename (without .json), load it
+     * @param {string} goal - The user's goal text
+     * @param {string} url - The URL being navigated to
+     */
+    async preloadCookiesFromGoal(goal, url = '') {
+        // Ensure cookies directory exists
+        if (!fs.existsSync(this.cookiesDir)) {
+            fs.mkdirSync(this.cookiesDir, { recursive: true });
+            console.log('[cookies] Created cookies folder');
+            return;
+        }
+
+        // Get all cookie files from folder
+        const cookieFiles = fs.readdirSync(this.cookiesDir)
+            .filter(file => file.endsWith('.json'));
+
+        if (cookieFiles.length === 0) {
+            console.log('[cookies] No cookie files in folder');
+            return;
+        }
+
+        console.log(`[cookies] Checking ${cookieFiles.length} cookie files`);
+
+        // Combine goal and URL for matching
+        const searchText = `${goal} ${url}`.toLowerCase();
+        let loaded = false;
+
+        for (const file of cookieFiles) {
+            // Get filename without .json extension (e.g., "linkedin.com" from "linkedin.com.json")
+            const domain = file.replace('.json', '').toLowerCase();
+            const shortName = domain.split('.')[0]; // e.g., "linkedin" from "linkedin.com"
+
+            // Check if goal OR url contains this domain or short name
+            if (searchText.includes(domain) || searchText.includes(shortName)) {
+                const cookiePath = path.join(this.cookiesDir, file);
+                try {
+                    const cookieData = fs.readFileSync(cookiePath, 'utf8');
+                    const rawCookies = JSON.parse(cookieData);
+
+                    if (Array.isArray(rawCookies) && rawCookies.length > 0) {
+                        // Transform cookies to Playwright format (handle browser extension formats)
+                        const cookies = rawCookies.map(c => ({
+                            name: c.name,
+                            value: c.value,
+                            domain: c.domain,
+                            path: c.path || '/',
+                            expires: c.expires || c.expirationDate || -1,
+                            httpOnly: c.httpOnly || false,
+                            secure: c.secure || false,
+                            sameSite: c.sameSite === 'no_restriction' ? 'None' :
+                                c.sameSite === 'lax' ? 'Lax' :
+                                    c.sameSite === 'strict' ? 'Strict' : 'None'
+                        }));
+
+                        await this.browser.addCookies(cookies);
+                        console.log(`[cookies] ✓ Loaded ${cookies.length} cookies from ${file}`);
+                        loaded = true;
+                    }
+                } catch (error) {
+                    console.log(`[cookies] Error loading ${file}: ${error.message}`);
+                }
+            }
+        }
+
+        if (!loaded) {
+            console.log('[cookies] No matching cookie files for goal/url');
         }
     }
 
@@ -167,6 +246,9 @@ class Agent {
 
         try {
             await this.initialize();
+
+            // Pre-load cookies for domains mentioned in the goal or URL
+            await this.preloadCookiesFromGoal(goal, url);
 
             // Navigate to starting URL
             console.log(`[nav] ${url}`);

@@ -26,7 +26,7 @@ class GeminiAdapter extends BaseLLMAdapter {
     async generateAction(context) {
         const prompt = this.buildPrompt(context);
 
-        try {
+        const apiCall = async () => {
             const result = await this.model.generateContent(prompt);
             const response = result.response;
             const text = response.text();
@@ -36,6 +36,15 @@ class GeminiAdapter extends BaseLLMAdapter {
             }
 
             return this.parseResponse(text);
+        };
+
+        try {
+            // Use rate limiter if available
+            if (this.rateLimiter) {
+                return await this.rateLimiter.execute(apiCall, 'Gemini API');
+            } else {
+                return await apiCall();
+            }
         } catch (error) {
             console.error('❌ Gemini API error:', error.message);
 

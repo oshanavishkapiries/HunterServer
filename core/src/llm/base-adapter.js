@@ -4,10 +4,27 @@
  * Extend this class to add support for different LLMs
  */
 
+const { RateLimiter } = require('./rate-limiter');
+const { config: globalConfig } = require('./config');
+
 class BaseLLMAdapter {
   constructor(config) {
     this.config = config;
     this.name = 'base';
+
+    // Initialize rate limiter if enabled
+    if (globalConfig.rateLimit.enabled) {
+      this.rateLimiter = new RateLimiter({
+        requestsPerMinute: globalConfig.rateLimit.requestsPerMinute,
+        requestsPerDay: globalConfig.rateLimit.requestsPerDay,
+        minDelayMs: globalConfig.rateLimit.minDelayMs,
+        maxRetries: globalConfig.rateLimit.maxRetries,
+        retryDelayMs: globalConfig.rateLimit.retryDelayMs,
+        retryMultiplier: globalConfig.rateLimit.retryMultiplier
+      });
+    } else {
+      this.rateLimiter = null;
+    }
   }
 
   /**

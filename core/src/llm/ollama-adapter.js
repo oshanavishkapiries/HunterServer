@@ -16,7 +16,7 @@ class OllamaAdapter extends BaseLLMAdapter {
     async generateAction(context) {
         const prompt = this.buildPrompt(context);
 
-        try {
+        const apiCall = async () => {
             const response = await fetch(`${this.baseUrl}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -43,6 +43,15 @@ class OllamaAdapter extends BaseLLMAdapter {
             }
 
             return this.parseResponse(responseText);
+        };
+
+        try {
+            // Use rate limiter if available
+            if (this.rateLimiter) {
+                return await this.rateLimiter.execute(apiCall, 'Ollama API');
+            } else {
+                return await apiCall();
+            }
         } catch (error) {
             console.error(`  [error] Ollama: ${error.message}`);
 

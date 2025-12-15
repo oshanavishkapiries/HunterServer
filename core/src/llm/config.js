@@ -46,6 +46,17 @@ const config = {
         chromePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe',
         headless: process.env.HEADLESS === 'true',
         userDataDir: process.env.BROWSER_PROFILE_DIR || null  // null = use default in data/browser-profile
+    },
+
+    // Rate limiter settings
+    rateLimit: {
+        enabled: process.env.RATE_LIMIT_ENABLED !== 'false',
+        requestsPerMinute: parseInt(process.env.RATE_LIMIT_RPM) || 60,
+        requestsPerDay: parseInt(process.env.RATE_LIMIT_RPD) || 1500,
+        minDelayMs: parseInt(process.env.RATE_LIMIT_MIN_DELAY) || 100,
+        maxRetries: parseInt(process.env.RATE_LIMIT_MAX_RETRIES) || 3,
+        retryDelayMs: parseInt(process.env.RATE_LIMIT_RETRY_DELAY) || 1000,
+        retryMultiplier: parseFloat(process.env.RATE_LIMIT_RETRY_MULTIPLIER) || 2
     }
 };
 

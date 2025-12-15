@@ -9,7 +9,8 @@
     "tokens": "node src/scripts/count-tokens.js",
     "tokens:save": "node src/scripts/count-tokens.js --save",
     "extract": "node src/scripts/extract-html.js",
-    "clean": "node src/scripts/clean-data.js"
+    "clean": "node src/scripts/clean-data.js",
+    "test:cookies": "node src/scripts/test-cookies.js"
   },
   "keywords": [
     "html",

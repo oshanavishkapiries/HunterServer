@@ -26,7 +26,7 @@ class CerebrasAdapter extends BaseLLMAdapter {
     async generateAction(context) {
         const prompt = this.buildPrompt(context);
 
-        try {
+        const apiCall = async () => {
             // Use streaming for potentially long responses
             const stream = await this.client.chat.completions.create({
                 messages: [
@@ -62,6 +62,15 @@ class CerebrasAdapter extends BaseLLMAdapter {
             }
 
             return this.parseResponse(responseText);
+        };
+
+        try {
+            // Use rate limiter if available
+            if (this.rateLimiter) {
+                return await this.rateLimiter.execute(apiCall, 'Cerebras API');
+            } else {
+                return await apiCall();
+            }
         } catch (error) {
             console.error('❌ Cerebras API error:', error.message);
 
