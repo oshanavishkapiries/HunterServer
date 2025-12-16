@@ -298,6 +298,35 @@ class DirectBrowserController {
     }
 
     /**
+     * Analyze page accessibility tree for semantic understanding
+     * @returns {Promise<Object>} - Accessibility snapshot
+     */
+    async analyze() {
+        this._ensureOpen();
+
+        try {
+            const page = this.browserManager.getPage();
+            // Get the full accessibility tree
+            const snapshot = await page.accessibility.snapshot({ interestingOnly: false });
+
+            this.actionHistory.push({
+                action: 'analyze',
+                timestamp: new Date().toISOString()
+            });
+
+            return {
+                success: true,
+                snapshot
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
      * Hover over an element
      * @param {string} elementId - UUID of element
      * @returns {Promise<Object>} - Result

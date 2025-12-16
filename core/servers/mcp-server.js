@@ -374,6 +374,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 };
             }
 
+            case 'direct_analyze': {
+                ensureDirectController();
+                return {
+                    content: [{
+                        type: 'text',
+                        text: JSON.stringify(await directController.analyze(), null, 2)
+                    }]
+                };
+            }
+
             case 'direct_close': {
                 if (!directController) {
                     return {

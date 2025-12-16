@@ -7,6 +7,7 @@
 const path = require('path');
 const { Agent, AgentFactory } = require('./agent');
 const { WkyExecutor } = require('./wky-executor');
+const { DirectBrowserController } = require('./direct-browser-controller');
 
 class BrowserAutomationAPI {
     /**
@@ -105,6 +106,17 @@ class BrowserAutomationAPI {
         } finally {
             this.isRunning = false;
         }
+    }
+
+    /**
+     * Create a direct browser controller instance
+     * @returns {DirectBrowserController}
+     */
+    createDirectController() {
+        return new DirectBrowserController({
+            headless: this.options.headless,
+            chromePath: this.options.chromePath
+        });
     }
 
     /**

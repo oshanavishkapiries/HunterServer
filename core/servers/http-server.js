@@ -151,7 +151,7 @@ app.post('/api/workflow', async (req, res) => {
  * Body: { options?: object }
  */
 app.post('/api/session', async (req, res) => {
-    const { options = {} } = req.body;
+    const { options = {}, type = 'agent' } = req.body;
     const sessionId = `session_${Date.now()}`;
 
     try {
@@ -160,12 +160,24 @@ app.post('/api/session', async (req, res) => {
             llmProvider: options.llmProvider || 'gemini'
         });
 
-        sessions.set(sessionId, { api, createdAt: new Date() });
+        const session = {
+            api,
+            type,
+            createdAt: new Date(),
+            controller: null
+        };
+
+        if (type === 'direct') {
+            session.controller = api.createDirectController();
+        }
+
+        sessions.set(sessionId, session);
 
         res.json({
             sessionId,
+            type,
             status: 'created',
-            message: 'Session created. Use /api/session/:id/run to execute goals.'
+            message: `Session created (${type}).`
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -210,6 +222,63 @@ app.delete('/api/session/:id', async (req, res) => {
         sessions.delete(id);
         res.json({ status: 'closed' });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/session/:id/tool
+ * Execute a direct tool (open, analyze, click, etc.)
+ */
+app.post('/api/session/:id/tool', async (req, res) => {
+    const { id } = req.params;
+    const { tool, args = {} } = req.body;
+
+    const session = sessions.get(id);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+
+    if (session.type !== 'direct' || !session.controller) {
+        return res.status(400).json({ error: 'Session is not in direct mode' });
+    }
+
+    try {
+        let result;
+        const controller = session.controller;
+
+        switch (tool) {
+            case 'open':
+                result = await controller.open(args.url);
+                break;
+            case 'analyze':
+                result = await controller.analyze();
+                break;
+            case 'click':
+                result = await controller.click(args.elementId);
+                break;
+            case 'type':
+                result = await controller.type(args.elementId, args.text, args.pressEnter);
+                break;
+            case 'scroll':
+                result = await controller.scroll(args.direction, args.amount);
+                break;
+            case 'screenshot':
+                result = await controller.screenshot();
+                break;
+            case 'get_state':
+                result = await controller.getState();
+                break;
+            case 'close':
+                result = await controller.close();
+                break;
+            default:
+                return res.status(400).json({ error: `Unknown tool: ${tool}` });
+        }
+
+        res.json({ success: true, result });
+    } catch (error) {
+        console.error(`[tool:${tool}] Error:`, error);
         res.status(500).json({ error: error.message });
     }
 });
