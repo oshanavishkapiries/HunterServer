@@ -181,10 +181,28 @@ class Agent {
                     console.log(`└─ ${action.reasoning.substring(0, 80)}...`);
                 }
 
-                // Visual highlight
-                if (this.highlighter && action.element_id) {
-                    await this.highlighter.highlightAction(action.element_id, action.action_type);
-                    await this.highlighter.showToast(`${action.action_type.toUpperCase()}: ${action.element_id}`, 'action');
+                // Visual highlight with enhanced feedback
+                if (this.highlighter) {
+                    // Update status panel with step and action
+                    await this.highlighter.updateStatusPanel(
+                        this.currentStep,
+                        action.action_type,
+                        action.element_id,
+                        action.text || action.url || action.direction
+                    );
+
+                    // Highlight element if applicable
+                    if (action.element_id) {
+                        const elementInfo = pageState.elementMap[action.element_id];
+                        await this.highlighter.highlightAction(action.element_id, action.action_type, elementInfo);
+                    }
+
+                    // Show action toast
+                    const targetInfo = action.element_id || action.url || action.text || 'page';
+                    await this.highlighter.showToast(
+                        `${action.action_type.toUpperCase()}: ${targetInfo.substring(0, 30)}`,
+                        action.action_type
+                    );
                 }
 
                 // Capture state before action for verification
@@ -215,10 +233,20 @@ class Agent {
                     pageChanged: verification.urlChanged || verification.contentChanged
                 });
 
-                // Log action to session
+                // Log action to session with full context
                 this.sessionManager.logAction({
                     step: this.currentStep,
                     ...action,
+                    pageState: {
+                        url: pageState.url,
+                        elementCount: pageState.elementCount,
+                        simplifiedHtml: pageState.simplifiedHtml,
+                        elementMap: pageState.elementMap
+                    },
+                    llmContext: {
+                        memoryContext: memoryContext,
+                        stepContext: stepContext
+                    },
                     result: {
                         success: result.success,
                         error: result.error,
