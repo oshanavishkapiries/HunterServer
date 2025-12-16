@@ -15,7 +15,9 @@ function parseAction(rawAction, elementMap = {}) {
         action_type: rawAction.action_type?.toLowerCase() || 'wait',
         reasoning: rawAction.reasoning || 'No reasoning provided',
         timestamp: new Date().toISOString(),
-        raw: rawAction
+        raw: rawAction,
+        // Preserve LLM data for logging
+        _llmData: rawAction._llmData || null
     };
 
     // Validate action type

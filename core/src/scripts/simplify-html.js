@@ -53,6 +53,7 @@ const CONFIG = {
         'noscript',
         'head',
         'base',
+        'code',
         'iframe',
         'svg',
         'canvas',

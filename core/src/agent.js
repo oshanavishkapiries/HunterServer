@@ -233,6 +233,10 @@ class Agent {
                     pageChanged: verification.urlChanged || verification.contentChanged
                 });
 
+                // Extract LLM data before removing from action
+                const llmData = action._llmData || null;
+                delete action._llmData; // Don't pass this to executor
+
                 // Log action to session with full context
                 this.sessionManager.logAction({
                     step: this.currentStep,
@@ -243,10 +247,12 @@ class Agent {
                         simplifiedHtml: pageState.simplifiedHtml,
                         elementMap: pageState.elementMap
                     },
-                    llmContext: {
-                        memoryContext: memoryContext,
-                        stepContext: stepContext
-                    },
+                    llm: llmData ? {
+                        model: llmData.model,
+                        prompt: llmData.prompt,
+                        response: llmData.response,
+                        usage: llmData.usage
+                    } : null,
                     result: {
                         success: result.success,
                         error: result.error,
@@ -400,7 +406,7 @@ async function main() {
         goal = nonFlagArgs.join(' ');
     }
 
-    console.log(`🤖 Using LLM provider: ${llmProvider}`);
+    console.log(` Using LLM provider: ${llmProvider}`);
 
     // Create agent with factory
     const deps = AgentFactory.create({

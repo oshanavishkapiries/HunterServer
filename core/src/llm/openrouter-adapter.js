@@ -19,12 +19,30 @@ class OpenRouterAdapter extends BaseLLMAdapter {
     /**
      * Generate next action using OpenRouter
      * @param {Object} context - Current context
-     * @returns {Promise<Object>} - Action object
+     * @returns {Promise<Object>} - Action object with llmData (prompt, response)
      */
     async generateAction(context) {
         const prompt = this.buildPrompt(context);
+        let rawResponse = '';
 
         const apiCall = async () => {
+            const requestBody = {
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a browser automation agent. Always respond with valid JSON only.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                max_tokens: this.config.maxTokens || 4096,
+                temperature: this.config.temperature || 0.2,
+                top_p: this.config.topP || 0.9
+            };
+
             const response = await fetch(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -33,22 +51,7 @@ class OpenRouterAdapter extends BaseLLMAdapter {
                     'HTTP-Referer': this.siteUrl,
                     'X-Title': this.siteName
                 },
-                body: JSON.stringify({
-                    model: this.model,
-                    messages: [
-                        {
-                            role: 'system',
-                            content: 'You are a browser automation agent. Always respond with valid JSON only.'
-                        },
-                        {
-                            role: 'user',
-                            content: prompt
-                        }
-                    ],
-                    max_tokens: this.config.maxTokens || 4096,
-                    temperature: this.config.temperature || 0.2,
-                    top_p: this.config.topP || 0.9
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -57,13 +60,23 @@ class OpenRouterAdapter extends BaseLLMAdapter {
             }
 
             const data = await response.json();
-            const responseText = data.choices?.[0]?.message?.content || '';
+            rawResponse = data.choices?.[0]?.message?.content || '';
 
             if (this.config.verbose) {
-                console.log('\n📤 OpenRouter Response:', responseText.substring(0, 500) + '...');
+                console.log('\n OpenRouter Response:', rawResponse.substring(0, 500) + '...');
             }
 
-            return this.parseResponse(responseText);
+            const parsedAction = this.parseResponse(rawResponse);
+
+            // Attach LLM data to action for logging
+            parsedAction._llmData = {
+                model: this.model,
+                prompt: prompt,
+                response: rawResponse,
+                usage: data.usage || null
+            };
+
+            return parsedAction;
         };
 
         try {
@@ -80,7 +93,13 @@ class OpenRouterAdapter extends BaseLLMAdapter {
             return {
                 action_type: 'terminate',
                 reasoning: `LLM API error: ${error.message}`,
-                errors: [error.message]
+                errors: [error.message],
+                _llmData: {
+                    model: this.model,
+                    prompt: prompt,
+                    response: null,
+                    error: error.message
+                }
             };
         }
     }

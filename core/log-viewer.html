@@ -21,6 +21,24 @@
         color: #333;
       }
 
+      /* Top Menu Bar */
+      .menubar {
+        background: #f0f0f0;
+        border-bottom: 1px solid #ccc;
+        padding: 4px 10px;
+        font-size: 13px;
+        display: flex;
+        gap: 15px;
+      }
+      .menubar span {
+        cursor: pointer;
+        padding: 2px 8px;
+      }
+      .menubar span:hover {
+        background: #ddd;
+        border-radius: 3px;
+      }
+
       /* Main Layout */
       .main-container {
         display: flex;
@@ -30,28 +48,31 @@
 
       /* Sidebar */
       .sidebar {
-        width: 220px;
+        width: 250px;
         background: #f5f5f5;
         border-right: 1px solid #ddd;
         display: flex;
         flex-direction: column;
       }
       .sidebar-header {
-        padding: 12px 15px;
+        padding: 10px 15px;
         font-weight: 600;
         font-size: 12px;
         color: #555;
         background: #eee;
         border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .sidebar-content {
         flex: 1;
         overflow-y: auto;
-        padding: 5px 0;
+        padding: 10px 0;
       }
 
       .file-item {
-        padding: 8px 15px;
+        padding: 6px 15px;
         font-size: 13px;
         cursor: pointer;
         display: flex;
@@ -75,12 +96,20 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      .file-item .badge {
+        background: #e5e7eb;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 10px;
+        color: #666;
+      }
 
       /* Upload Zone */
       .upload-zone {
         margin: 10px;
         padding: 20px;
         border: 2px dashed #ccc;
+        border-radius: 8px;
         text-align: center;
         cursor: pointer;
         font-size: 12px;
@@ -107,7 +136,7 @@
         background: #f0f0f0;
         border-bottom: 1px solid #ddd;
         display: flex;
-        padding: 0;
+        padding: 0 10px;
       }
       .tab-item {
         padding: 8px 16px;
@@ -119,7 +148,6 @@
         gap: 6px;
         background: none;
         border: none;
-        border-right: 1px solid #ddd;
         color: #555;
       }
       .tab-item:hover {
@@ -133,6 +161,7 @@
       .tab-item .close {
         font-size: 10px;
         padding: 2px;
+        border-radius: 3px;
       }
       .tab-item .close:hover {
         background: #ddd;
@@ -153,7 +182,7 @@
         border-bottom: 1px solid #eee;
       }
       .doc-header h1 {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 500;
         margin-bottom: 8px;
       }
@@ -164,8 +193,9 @@
 
       /* Action Cell */
       .action-cell {
-        margin-bottom: 12px;
+        margin-bottom: 15px;
         border: 1px solid #e5e7eb;
+        border-radius: 8px;
         overflow: hidden;
       }
       .action-cell.success {
@@ -193,6 +223,7 @@
         color: #fff;
         width: 24px;
         height: 24px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -202,6 +233,7 @@
 
       .cell-type {
         padding: 3px 10px;
+        border-radius: 4px;
         font-size: 12px;
         font-weight: 500;
         text-transform: uppercase;
@@ -243,6 +275,7 @@
       .cell-status {
         font-size: 12px;
         padding: 2px 8px;
+        border-radius: 10px;
       }
       .cell-status.success {
         background: #dcfce7;
@@ -274,17 +307,18 @@
       /* Cell Tabs */
       .cell-tabs {
         display: flex;
-        gap: 0;
+        gap: 5px;
         margin-bottom: 15px;
         border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 10px;
       }
       .cell-tab {
         padding: 6px 12px;
         font-size: 12px;
         border: 1px solid #e5e7eb;
-        border-bottom: none;
+        border-radius: 5px;
         cursor: pointer;
-        background: #f9fafb;
+        background: #fff;
       }
       .cell-tab:hover {
         background: #f3f4f6;
@@ -323,6 +357,7 @@
       /* Code Block */
       .code-block {
         background: #1e1e1e;
+        border-radius: 6px;
         padding: 15px;
         max-height: 400px;
         overflow: auto;
@@ -340,6 +375,7 @@
         max-height: 300px;
         overflow-y: auto;
         border: 1px solid #e5e7eb;
+        border-radius: 6px;
       }
       .element-row {
         padding: 8px 12px;
@@ -372,6 +408,7 @@
       .error-box {
         background: #fef2f2;
         border: 1px solid #fecaca;
+        border-radius: 6px;
         padding: 12px;
         color: #dc2626;
         font-size: 13px;
@@ -388,9 +425,30 @@
         font-size: 48px;
         margin-bottom: 15px;
       }
+
+      /* Status Bar */
+      .statusbar {
+        background: #2563eb;
+        color: #fff;
+        padding: 4px 15px;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+      }
     </style>
   </head>
   <body>
+    <div class="menubar">
+      <span>File</span>
+      <span>Edit</span>
+      <span>View</span>
+      <span>Run</span>
+      <span>Kernel</span>
+      <span>Tabs</span>
+      <span>Settings</span>
+      <span>Help</span>
+    </div>
+
     <div class="main-container">
       <!-- Sidebar -->
       <div class="sidebar">
@@ -416,9 +474,8 @@
       <div class="content">
         <div class="tabs-bar" id="tabsBar">
           <button class="tab-item active">
-            <span></span>
-            <span>log_20251216_113551.json</span>
-            <span class="close">×</span>
+            <span>📋</span>
+            <span>Welcome</span>
           </button>
         </div>
 
@@ -426,10 +483,20 @@
           <div class="empty-state">
             <div class="icon"></div>
             <h2>Agent Log Viewer</h2>
-            <p style="margin-top: 10px">Upload JSON log files to analyze</p>
+            <p style="margin-top: 10px">
+              Upload JSON log files to analyze automation actions
+            </p>
+            <p style="margin-top: 5px; font-size: 12px">
+              Drag & drop files to the sidebar or use the upload zone
+            </p>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="statusbar">
+      <span id="statusText">Ready</span>
+      <span>Log Viewer v1.0</span>
     </div>
 
     <script>
@@ -453,9 +520,9 @@
         item.className = "file-item";
         item.dataset.name = file.name;
         item.innerHTML = `
-          <span class="icon">📄</span>
-          <span class="name">${file.name}</span>
-        `;
+                <span class="icon">📄</span>
+                <span class="name">${file.name}</span>
+            `;
         item.onclick = () => loadFile(file);
         list.appendChild(item);
       }
@@ -483,12 +550,12 @@
 
       function renderLog(actions, fileName) {
         document.getElementById("tabsBar").innerHTML = `
-          <button class="tab-item active">
-            <span></span>
-            <span>${fileName}</span>
-            <span class="close">×</span>
-          </button>
-        `;
+                <button class="tab-item active">
+                    <span></span>
+                    <span>${fileName}</span>
+                    <span class="close">✕</span>
+                </button>
+            `;
 
         const success = actions.filter((a) => a.result?.success).length;
         const failed = actions.filter(
@@ -496,161 +563,175 @@
         ).length;
 
         document.getElementById("mainContent").innerHTML = `
-          <div class="doc-header">
-            <h1> ${fileName}</h1>
-            <div class="meta">
-              ${actions.length} actions | 
-              <span style="color:#16a34a">${success} success</span> | 
-              <span style="color:#dc2626">${failed} failed</span>
-            </div>
-          </div>
-
-          ${actions
-            .map((a, i) => {
-              const isSuccess = a.result?.success !== false;
-              const time = new Date(a.timestamp).toLocaleTimeString();
-              const hasHtml = a.pageState?.simplifiedHtml;
-              const hasElements =
-                a.pageState?.elementMap &&
-                Object.keys(a.pageState.elementMap).length > 0;
-              const hasLlm = a.llm?.prompt || a.llm?.response;
-
-              return `
-              <div class="action-cell ${
-                isSuccess ? "success" : "failed"
-              }" data-idx="${i}">
-                <div class="cell-header" onclick="toggleCell(${i})">
-                  <span class="cell-number">${a.step || i + 1}</span>
-                  <span class="cell-type ${a.action_type}">${
-                a.action_type
-              }</span>
-                  <span class="cell-reasoning">${esc(a.reasoning || "")}</span>
-                  <span class="cell-status ${
-                    isSuccess ? "success" : "error"
-                  }">${isSuccess ? "✓ OK" : "✗ Error"}</span>
-                  <span class="cell-toggle">▼</span>
+                <div class="doc-header">
+                    <h1> ${fileName}</h1>
+                    <div class="meta">
+                        ${actions.length} actions &nbsp;|&nbsp; 
+                        <span style="color:#16a34a">${success} success</span> &nbsp;|&nbsp;
+                        <span style="color:#dc2626">${failed} failed</span>
+                    </div>
                 </div>
-                <div class="cell-content">
-                  <div class="cell-tabs">
-                    <button class="cell-tab active" onclick="showCellTab(${i}, 'info')">Info</button>
-                    ${
-                      hasLlm
-                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'llm')"> LLM</button>`
-                        : ""
-                    }
-                    ${
-                      hasHtml
-                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'html')">HTML</button>`
-                        : ""
-                    }
-                    ${
-                      hasElements
-                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'elements')">Elements</button>`
-                        : ""
-                    }
-                  </div>
 
-                  <div class="cell-tab-content active" id="cell-${i}-info">
-                    <div class="info-row">
-                      <div class="info-item"><span class="label">Time:</span><span class="value">${time}</span></div>
-                      <div class="info-item"><span class="label">URL:</span><span class="value">${esc(
-                        a.pageState?.url || a.url || "-"
-                      )}</span></div>
-                      ${
-                        a.element_id
-                          ? `<div class="info-item"><span class="label">Element:</span><span class="value">${a.element_id}</span></div>`
-                          : ""
-                      }
-                      ${
-                        a.text
-                          ? `<div class="info-item"><span class="label">Text:</span><span class="value">${esc(
-                              a.text
-                            )}</span></div>`
-                          : ""
-                      }
-                      ${
-                        a.llm?.model
-                          ? `<div class="info-item"><span class="label">Model:</span><span class="value">${a.llm.model}</span></div>`
-                          : ""
-                      }
-                    </div>
-                    ${
-                      a.result?.error
-                        ? `<div class="error-box">⚠️ ${esc(
-                            a.result.error
-                          )}</div>`
-                        : ""
-                    }
-                  </div>
+                ${actions
+                  .map((a, i) => {
+                    const isSuccess = a.result?.success !== false;
+                    const time = new Date(a.timestamp).toLocaleTimeString();
+                    const hasHtml = a.pageState?.simplifiedHtml;
+                    const hasElements = a.pageState?.elementMap;
+                    const hasLlm = a.llm?.prompt || a.llm?.response;
 
-                  ${
-                    hasLlm
-                      ? `
-                    <div class="cell-tab-content" id="cell-${i}-llm">
-                      <h4 style="margin-bottom:10px;color:#666"> Prompt (Input)</h4>
-                      <div class="code-block" style="max-height:300px;margin-bottom:15px"><pre>${esc(
-                        a.llm.prompt || "N/A"
-                      )}</pre></div>
-                      <h4 style="margin-bottom:10px;color:#666">📥 Response (Output)</h4>
-                      <div class="code-block" style="max-height:200px"><pre>${esc(
-                        a.llm.response || "N/A"
-                      )}</pre></div>
-                      ${
-                        a.llm.usage
-                          ? `<div style="margin-top:10px;font-size:12px;color:#888">Tokens: ${
-                              a.llm.usage.prompt_tokens || 0
-                            } in / ${
-                              a.llm.usage.completion_tokens || 0
-                            } out</div>`
-                          : ""
-                      }
-                    </div>
-                  `
-                      : ""
-                  }
+                    return `
+                        <div class="action-cell ${
+                          isSuccess ? "success" : "failed"
+                        }" data-idx="${i}">
+                            <div class="cell-header" onclick="toggleCell(${i})">
+                                <span class="cell-number">${
+                                  a.step || i + 1
+                                }</span>
+                                <span class="cell-type ${a.action_type}">${
+                      a.action_type
+                    }</span>
+                                <span class="cell-reasoning">${esc(
+                                  a.reasoning || ""
+                                )}</span>
+                                <span class="cell-status ${
+                                  isSuccess ? "success" : "error"
+                                }">${isSuccess ? "✓ OK" : "✗ Error"}</span>
+                                <span class="cell-toggle">▼</span>
+                            </div>
+                            <div class="cell-content">
+                                <div class="cell-tabs">
+                                    <button class="cell-tab active" onclick="showCellTab(${i}, 'info')">Info</button>
+                                    ${
+                                      hasLlm
+                                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'llm')"> LLM</button>`
+                                        : ""
+                                    }
+                                    ${
+                                      hasHtml
+                                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'html')">HTML</button>`
+                                        : ""
+                                    }
+                                    ${
+                                      hasElements
+                                        ? `<button class="cell-tab" onclick="showCellTab(${i}, 'elements')">Elements</button>`
+                                        : ""
+                                    }
+                                </div>
 
-                  ${
-                    hasHtml
-                      ? `
-                    <div class="cell-tab-content" id="cell-${i}-html">
-                      <div class="code-block"><pre>${esc(
-                        a.pageState.simplifiedHtml
-                      )}</pre></div>
-                    </div>
-                  `
-                      : ""
-                  }
+                                <div class="cell-tab-content active" id="cell-${i}-info">
+                                    <div class="info-row">
+                                        <div class="info-item"><span class="label">Time:</span><span class="value">${time}</span></div>
+                                        <div class="info-item"><span class="label">URL:</span><span class="value">${esc(
+                                          a.pageState?.url || a.url || "-"
+                                        )}</span></div>
+                                        ${
+                                          a.element_id
+                                            ? `<div class="info-item"><span class="label">Element:</span><span class="value">${a.element_id}</span></div>`
+                                            : ""
+                                        }
+                                        ${
+                                          a.text
+                                            ? `<div class="info-item"><span class="label">Text:</span><span class="value">${esc(
+                                                a.text
+                                              )}</span></div>`
+                                            : ""
+                                        }
+                                        ${
+                                          a.llm?.model
+                                            ? `<div class="info-item"><span class="label">Model:</span><span class="value">${a.llm.model}</span></div>`
+                                            : ""
+                                        }
+                                    </div>
+                                    ${
+                                      a.result?.error
+                                        ? `<div class="error-box">⚠️ ${esc(
+                                            a.result.error
+                                          )}</div>`
+                                        : ""
+                                    }
+                                </div>
 
-                  ${
-                    hasElements
-                      ? `
-                    <div class="cell-tab-content" id="cell-${i}-elements">
-                      <div class="element-list">
-                        ${Object.entries(a.pageState.elementMap)
-                          .slice(0, 50)
-                          .map(
-                            ([id, el]) => `
-                          <div class="element-row">
-                            <span class="id">${id}</span>
-                            <span class="tag">&lt;${el.tag}&gt;</span>
-                            <span class="text">${esc(
-                              el.text || el["aria-label"] || el.name || ""
-                            )}</span>
-                          </div>
-                        `
-                          )
-                          .join("")}
-                      </div>
-                    </div>
-                  `
-                      : ""
-                  }
-                </div>
-              </div>
+                                ${
+                                  hasLlm
+                                    ? `
+                                    <div class="cell-tab-content" id="cell-${i}-llm">
+                                        <h4 style="margin-bottom:10px;color:#666"> Prompt (Input)</h4>
+                                        <div class="code-block" style="max-height:300px;margin-bottom:15px"><pre>${esc(
+                                          a.llm.prompt || "N/A"
+                                        )}</pre></div>
+                                        <h4 style="margin-bottom:10px;color:#666">📥 Response (Output)</h4>
+                                        <div class="code-block" style="max-height:200px"><pre>${esc(
+                                          a.llm.response || "N/A"
+                                        )}</pre></div>
+                                        ${
+                                          a.llm.usage
+                                            ? `<div style="margin-top:10px;font-size:12px;color:#888">Tokens: ${
+                                                a.llm.usage.prompt_tokens || 0
+                                              } in / ${
+                                                a.llm.usage.completion_tokens ||
+                                                0
+                                              } out</div>`
+                                            : ""
+                                        }
+                                    </div>
+                                `
+                                    : ""
+                                }
+
+                                ${
+                                  hasHtml
+                                    ? `
+                                    <div class="cell-tab-content" id="cell-${i}-html">
+                                        <div class="code-block"><pre>${esc(
+                                          a.pageState.simplifiedHtml
+                                        )}</pre></div>
+                                    </div>
+                                `
+                                    : ""
+                                }
+
+                                ${
+                                  hasElements
+                                    ? `
+                                    <div class="cell-tab-content" id="cell-${i}-elements">
+                                        <div class="element-list">
+                                            ${Object.entries(
+                                              a.pageState.elementMap
+                                            )
+                                              .slice(0, 50)
+                                              .map(
+                                                ([id, el]) => `
+                                                <div class="element-row">
+                                                    <span class="id">${id}</span>
+                                                    <span class="tag">&lt;${
+                                                      el.tag
+                                                    }&gt;</span>
+                                                    <span class="text">${esc(
+                                                      el.text ||
+                                                        el["aria-label"] ||
+                                                        el.name ||
+                                                        ""
+                                                    )}</span>
+                                                </div>
+                                            `
+                                              )
+                                              .join("")}
+                                        </div>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                            </div>
+                        </div>
+                    `;
+                  })
+                  .join("")}
             `;
-            })
-            .join("")}
-        `;
+
+        document.getElementById(
+          "statusText"
+        ).textContent = `Loaded ${actions.length} actions`;
       }
 
       function toggleCell(i) {

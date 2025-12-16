@@ -32,7 +32,7 @@ class GeminiAdapter extends BaseLLMAdapter {
             const text = response.text();
 
             if (this.config.verbose) {
-                console.log('\n📤 LLM Response:', text.substring(0, 500) + '...');
+                console.log('\n LLM Response:', text.substring(0, 500) + '...');
             }
 
             return this.parseResponse(text);
