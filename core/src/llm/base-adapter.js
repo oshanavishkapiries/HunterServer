@@ -47,7 +47,7 @@ class BaseLLMAdapter {
    * @returns {string} - Formatted prompt
    */
   buildPrompt(context) {
-    const { goal, simplifiedHtml, elementMap, previousActions, currentUrl } = context;
+    const { goal, simplifiedHtml, elementMap, previousActions, currentUrl, memoryContext, stepContext, loopProgress } = context;
 
     const actionsHistory = previousActions?.length > 0
       ? previousActions.map((a, i) => `${i + 1}. ${a.action_type}: ${a.reasoning}`).join('\n')
@@ -58,6 +58,18 @@ class BaseLLMAdapter {
       .map(([uuid, info]) => `${uuid}: ${info.tag}${info.text ? ` "${info.text.substring(0, 50)}"` : ''}`)
       .join('\n');
 
+    // Build memory section if available
+    let memorySection = '';
+    if (stepContext) {
+      memorySection += `\n## Current Task\n${stepContext}\n`;
+    }
+    if (loopProgress && loopProgress.target > 0) {
+      memorySection += `\n## Loop Progress\nCompleted: ${loopProgress.current}/${loopProgress.target} | Remaining: ${loopProgress.remaining}\n`;
+    }
+    if (memoryContext) {
+      memorySection += `\n## Agent Memory\n${memoryContext}\n`;
+    }
+
     return `You are a browser automation agent. Your task is to interact with web pages to achieve the user's goal AND intelligently extract useful data.
 
 ## Current URL
@@ -65,7 +77,7 @@ ${currentUrl || 'Unknown'}
 
 ## User's Goal
 ${goal}
-
+${memorySection}
 ## Previous Actions
 ${actionsHistory}
 

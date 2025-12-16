@@ -10,7 +10,54 @@ class InputTextAction extends BaseAction {
 
     async execute({ element_id, text }) {
         try {
-            const element = await this.getElement(element_id);
+            let element = null;
+            let elementInfo = null;
+
+            // Try to get element by ID first
+            try {
+                element = await this.getElement(element_id);
+                elementInfo = this.elementMap[element_id];
+            } catch (e) {
+                // Element not found - try to find input field by common selectors
+                console.log(`  [input_text] Element ${element_id} not found, searching for input...`);
+
+                // Try common search input selectors
+                const selectors = [
+                    'input[name="q"]',           // Google
+                    'input[type="search"]',
+                    'input[aria-label*="Search"]',
+                    'input[aria-label*="search"]',
+                    'textarea[name="q"]',
+                    '[role="searchbox"]',
+                    'input[name="search"]',
+                    'input[placeholder*="Search"]'
+                ];
+
+                for (const selector of selectors) {
+                    element = await this.page.$(selector);
+                    if (element) {
+                        console.log(`  [input_text] Found input via: ${selector}`);
+                        break;
+                    }
+                }
+
+                if (!element) {
+                    // Last resort: find any visible text input
+                    const inputs = await this.page.$$('input[type="text"], input:not([type])');
+                    for (const inp of inputs) {
+                        const box = await inp.boundingBox();
+                        if (box && box.width > 100) {
+                            element = inp;
+                            console.log(`  [input_text] Found generic text input`);
+                            break;
+                        }
+                    }
+                }
+
+                if (!element) {
+                    return { success: false, error: `Could not find element ${element_id} or any suitable input field` };
+                }
+            }
 
             // Clear existing content first
             await element.fill('');
@@ -19,11 +66,10 @@ class InputTextAction extends BaseAction {
             await element.fill(text || '');
 
             // Check if this is a search input - might need Enter key
-            const elementInfo = this.elementMap[element_id];
             if (this.isSearchInput(elementInfo)) {
-                this.log('keypress Enter');
+                console.log(`  [input_text] Auto-pressing Enter for search input`);
                 await this.page.keyboard.press('Enter');
-                await this.page.waitForTimeout(500);
+                await this.page.waitForTimeout(1000);
             }
 
             return { success: true };

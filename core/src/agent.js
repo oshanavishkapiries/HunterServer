@@ -1,15 +1,16 @@
 /**
- * Browser Automation Agent (SOLID Refactored)
+ * Browser Automation Agent (with Memory & Goal Planning)
  * 
- * S - Single Responsibility: Agent only orchestrates the automation loop
- * O - Open/Closed: Extend by adding new managers, not modifying Agent
- * L - Liskov: All managers can be swapped with compatible implementations
- * I - Interface Segregation: Each manager has focused interface
- * D - Dependency Inversion: Agent depends on abstractions (managers), not concretions
+ * Features:
+ * - Goal planning: Breaks complex goals into sub-tasks
+ * - Memory: Short-term, working, and long-term memory
+ * - Progress tracking: Loops and step progress
  */
 const { parseAction, isTerminal } = require('./actions');
 const { AgentFactory } = require('./agent-factory');
 const { config } = require('./llm');
+const { AgentMemory } = require('./agent-memory');
+const { GoalPlanner } = require('./goal-planner');
 
 class Agent {
     /**
@@ -29,6 +30,11 @@ class Agent {
         this.executor = null;
         this.highlighter = null;
         this.currentStep = 0;
+
+        // Memory & Planning
+        this.memory = new AgentMemory();
+        this.planner = new GoalPlanner(this.llm);
+        this.plan = null;
     }
 
     /**
@@ -52,7 +58,7 @@ class Agent {
     }
 
     /**
-     * Run the autonomous agent loop
+     * Run the autonomous agent loop with memory
      * @param {string} url - Starting URL
      * @param {string} goal - User's goal
      * @returns {Object} - Execution result
@@ -73,12 +79,34 @@ class Agent {
             if (this.tui) this.tui.setStatus('initializing');
             await this.initialize();
 
+            // Plan the goal
+            this.log('Planning goal...', 'info');
+            this.plan = await this.planner.plan(goal);
+            this.memory.setGoalPlan(this.plan);
+
+            if (this.plan.steps.length > 1) {
+                this.log(`Plan: ${this.plan.steps.length} steps`, 'info');
+            }
+
+            // Set loop target if detected
+            if (this.plan.loopCount > 0) {
+                this.memory.setLoopTarget(this.plan.loopCount);
+                this.log(`Loop target: ${this.plan.loopCount}`, 'info');
+            }
+
+            // Remember credentials if present
+            if (this.plan.hasCredentials) {
+                const usernameMatch = goal.match(/(?:username|email|user)[:\s]*["']?([^\s"']+)/i);
+                if (usernameMatch) {
+                    this.memory.remember('username', usernameMatch[1]);
+                }
+            }
+
             // Load cookies
             const cookieResult = await this.cookieManager.loadFromGoalAndUrl(goal, url);
             if (cookieResult.loaded) {
                 this.log(`Loaded ${cookieResult.count} cookies from ${cookieResult.file}`, 'cookie');
-            } else {
-                this.log(cookieResult.message || 'No matching cookies', 'warning');
+                this.memory.remember('cookiesLoaded', true);
             }
 
             // Navigate
@@ -86,7 +114,7 @@ class Agent {
             await this.browserManager.goto(url);
             await this.browserManager.waitForStable();
 
-            // Main automation loop
+            // Main automation loop with memory
             while (this.currentStep < this.options.maxSteps) {
                 this.currentStep++;
                 if (this.tui) {
@@ -102,14 +130,25 @@ class Agent {
                     this.tui.printElements(pageState.elementCount);
                 }
 
-                // Get action from LLM
+                // Build context with memory
                 if (this.tui) this.tui.setStatus('thinking');
+                const memoryContext = this.memory.getContextForLLM();
+                const stepContext = this.planner.getStepContext(
+                    this.plan,
+                    this.memory.workingMemory.currentStep,
+                    this.memory.workingMemory.loopCount
+                );
+
                 const context = {
                     goal,
                     simplifiedHtml: pageState.simplifiedHtml,
                     elementMap: pageState.elementMap,
                     previousActions: this.sessionManager.getLastActions(5),
-                    currentUrl: pageState.url
+                    currentUrl: pageState.url,
+                    // Memory context
+                    memoryContext: memoryContext,
+                    stepContext: stepContext,
+                    loopProgress: this.memory.getLoopProgress()
                 };
 
                 const rawAction = await this.llm.generateAction(context);
@@ -133,7 +172,15 @@ class Agent {
                 // Execute action
                 const result = await this.executor.execute(action);
 
-                // Log action
+                // Update memory
+                this.memory.addAction({
+                    step: this.currentStep,
+                    action_type: action.action_type,
+                    element_id: action.element_id,
+                    success: result.success
+                });
+
+                // Log action to session
                 this.sessionManager.logAction({
                     step: this.currentStep,
                     ...action,
@@ -142,12 +189,55 @@ class Agent {
 
                 // Check for terminal actions
                 if (isTerminal(action.action_type)) {
+                    // Check if we're in a loop and need to continue
+                    const loopProgress = this.memory.getLoopProgress();
+
+                    if (loopProgress.target > 0 && loopProgress.remaining > 0) {
+                        // Not done with loop - increment and continue
+                        const loopState = this.memory.incrementLoop();
+                        this.log(`Loop progress: ${loopState.current}/${loopState.target}`, 'info');
+
+                        // Observe what we completed
+                        this.memory.observe(`Completed iteration ${loopState.current}`);
+
+                        // Continue loop - don't break
+                        continue;
+                    }
+
                     this.log(`Task ${action.action_type}`, 'success');
 
                     if (action.extracted_data) {
                         this.sessionManager.setExtractedData(action.extracted_data);
                     }
                     break;
+                }
+
+                // Detect and remember important observations
+                if (action.action_type === 'input_text' && action.element_id) {
+                    const elemInfo = pageState.elementMap[action.element_id];
+                    if (elemInfo?.type === 'password') {
+                        this.memory.remember('passwordEntered', true);
+                    }
+                    if (elemInfo?.name === 'email' || elemInfo?.type === 'email') {
+                        this.memory.remember('emailEntered', true);
+                    }
+                }
+
+                if (action.action_type === 'click') {
+                    // Check for login/submit buttons
+                    const elemInfo = pageState.elementMap[action.element_id];
+                    const text = elemInfo?.text?.toLowerCase() || '';
+                    if (text.includes('sign in') || text.includes('login') || text.includes('log in')) {
+                        this.memory.observe('Clicked login button');
+                    }
+                    if (text.includes('apply') || text.includes('submit')) {
+                        this.memory.observe('Clicked apply/submit button');
+                        // If applying to job, increment loop
+                        if (this.memory.getLoopProgress().target > 0) {
+                            const loopState = this.memory.incrementLoop();
+                            this.log(`Applied: ${loopState.current}/${loopState.target}`, 'success');
+                        }
+                    }
                 }
 
                 // Wait between actions
@@ -158,7 +248,10 @@ class Agent {
             if (this.tui) this.tui.setStatus('error');
         } finally {
             // Save and close
-            const results = await this.sessionManager.saveResults({ status: 'completed' });
+            const results = await this.sessionManager.saveResults({
+                status: 'completed',
+                loopProgress: this.memory.getLoopProgress()
+            });
             await this.browserManager.close();
             this.log('Browser closed', 'info');
 
@@ -184,13 +277,17 @@ class Agent {
     }
 
     /**
-     * Get current status
+     * Get current status including memory
      */
     getStatus() {
         return {
             ...this.sessionManager.getStatus(),
             currentStep: this.currentStep,
-            browserRunning: this.browserManager.isRunning()
+            browserRunning: this.browserManager.isRunning(),
+            memory: {
+                facts: this.memory.getAllFacts(),
+                loopProgress: this.memory.getLoopProgress()
+            }
         };
     }
 }
@@ -206,7 +303,7 @@ async function main() {
         console.log('Usage: npm run agent "<goal>"');
         console.log('Examples:');
         console.log('  npm run agent "Go to google.com and search for weather"');
-        console.log('  npm run agent "Go to linkedin and find 5 jobs"');
+        console.log('  npm run agent "Go to linkedin, login and apply to 5 jobs"');
         process.exit(1);
     }
 
@@ -242,7 +339,8 @@ async function main() {
     const deps = AgentFactory.create({
         headless: args.includes('--headless'),
         verbose: !args.includes('--quiet'),
-        llmProvider
+        llmProvider,
+        maxSteps: 100  // Increase default for complex goals
     });
 
     const agent = new Agent(deps);
