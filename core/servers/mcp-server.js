@@ -11,6 +11,10 @@
  *   node servers/mcp-server.js
  */
 
+// Load environment variables (CRITICAL for CHROME_PATH)
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const {

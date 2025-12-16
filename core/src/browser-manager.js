@@ -37,8 +37,9 @@ class BrowserManager {
         }
 
         // Launch persistent context (saves cookies, history, localStorage)
+        // CRITICAL: executablePath must be undefined (not null) if not set to use bundled
         this.context = await chromium.launchPersistentContext(this.config.userDataDir, {
-            executablePath: this.config.chromePath,
+            executablePath: this.config.chromePath || undefined,
             headless: this.config.headless,
             viewport: this.config.viewport,
             userAgent: this.config.userAgent,

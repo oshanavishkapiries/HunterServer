@@ -14,7 +14,8 @@
     "clean": "node src/scripts/clean-data.js",
     "test:cookies": "node src/scripts/test-cookies.js",
     "start:http": "node servers/http-server.js",
-    "start:mcp": "node servers/mcp-server.js"
+    "start:mcp": "node servers/mcp-server.js",
+    "watch:mcp": "npx nodemon servers/mcp-server.js"
   },
   "keywords": [
     "html",
