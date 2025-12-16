@@ -42,9 +42,12 @@ class InputTextAction extends BaseAction {
             await element.fill('', { timeout: 5000 });
             await element.fill(text || '', { timeout: 5000 });
 
-            // Auto-press Enter for search inputs
+            // Determine if we should press Enter after input
             const isSearch = this.isSearchInput(elementInfo) || await this.looksLikeSearch(element);
-            if (isSearch) {
+            const isLogin = await this.isLoginInput(element);
+
+            // Press Enter for search inputs (NOT for login forms)
+            if (isSearch && !isLogin) {
                 console.log(`  [input_text] Pressing Enter for search`);
                 await this.page.keyboard.press('Enter');
                 await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => { });
@@ -54,6 +57,25 @@ class InputTextAction extends BaseAction {
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    }
+
+    async isLoginInput(element) {
+        try {
+            const type = await element.getAttribute('type');
+            const name = await element.getAttribute('name');
+            const placeholder = await element.getAttribute('placeholder') || '';
+
+            return type === 'password' ||
+                type === 'email' ||
+                name?.includes('password') ||
+                name?.includes('email') ||
+                name?.includes('username') ||
+                name?.includes('session') ||
+                placeholder.toLowerCase().includes('password') ||
+                placeholder.toLowerCase().includes('email');
+        } catch {
+            return false;
         }
     }
 
