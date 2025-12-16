@@ -2,7 +2,20 @@
 
 Simple, developer-friendly reference for all automation tools.
 
-## 1. Direct CLI (Interactive)
+## 1. Agent CLI (Autonomous)
+
+Run the AI agent with a natural language goal.
+
+```bash
+# Basic Run
+npm run agent "go to google and search for weather"
+
+# With Options
+npm run agent "search news" -- --headless
+npm run agent "search news" -- --llm gemini
+```
+
+## 2. Direct CLI (Interactive)
 
 The fastest way to test tools manually. Starts an interactive shell.
 
@@ -22,7 +35,7 @@ Commands inside CLI:
 > close                  # Close browser
 ```
 
-## 2. HTTP Server (REST API)
+## 3. HTTP Server (REST API)
 
 Run the automation core as a service.
 
@@ -65,7 +78,7 @@ POST /api/run
    ```
    Supported Tools: `open`, `analyze`, `click`, `type`, `scroll`, `screenshot`
 
-## 3. MCP Server (AI Agent Integration)
+## 4. MCP Server (AI Agent Integration)
 
 Connect to Claude Desktop, Cursor, or other MCP clients.
 
@@ -91,7 +104,7 @@ npm run start:mcp
 | `direct_scroll`     | Scroll page up/down                                  |
 | `direct_screenshot` | Capture screenshot                                   |
 
-## 4. Standalone Scripts
+## 5. Standalone Scripts
 
 Useful for specific, repeatable tasks.
 

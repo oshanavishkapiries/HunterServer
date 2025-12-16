@@ -306,18 +306,27 @@ class DirectBrowserController {
 
         try {
             const page = this.browserManager.getPage();
-            // Get the full accessibility tree
-            const snapshot = await page.accessibility.snapshot({ interestingOnly: false });
 
-            this.actionHistory.push({
-                action: 'analyze',
-                timestamp: new Date().toISOString()
-            });
+            // Try standard Playwright API first
+            if (page.accessibility) {
+                const snapshot = await page.accessibility.snapshot({ interestingOnly: false });
+                this.actionHistory.push({ action: 'analyze', method: 'playwright', timestamp: new Date().toISOString() });
+                return { success: true, snapshot };
+            }
 
-            return {
-                success: true,
-                snapshot
-            };
+            // Fallback to CDP (Chrome DevTools Protocol)
+            // Needed because in some environments (System Chrome + Playwright Extra), page.accessibility is missing
+            try {
+                const client = await page.context().newCDPSession(page);
+                const { nodes } = await client.send('Accessibility.getFullAXTree');
+                this.actionHistory.push({ action: 'analyze', method: 'cdp', timestamp: new Date().toISOString() });
+
+                // Return raw nodes (LLM can handle it)
+                return { success: true, snapshot: { nodes, source: 'cdp' } };
+            } catch (cdpError) {
+                throw new Error(`CDP fallback failed: ${cdpError.message}`);
+            }
+
         } catch (error) {
             return {
                 success: false,

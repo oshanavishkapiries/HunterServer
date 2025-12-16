@@ -54,6 +54,17 @@ rl.on('line', async (line) => {
                 }
                 break;
 
+            case 'scroll':
+                const direction = args[0] || 'down';
+                await controller.scroll(direction);
+                console.log(`✅ Scrolled ${direction}`);
+                break;
+
+            case 'back':
+                await controller.goBack();
+                console.log('✅ Went back');
+                break;
+
             case 'exit':
             case 'quit':
                 process.exit(0);
