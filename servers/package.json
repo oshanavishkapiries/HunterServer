@@ -1,5 +1,5 @@
 {
-    "name": "browser-automation-servers",
+    "name": "winky-servers",
     "version": "1.0.0",
     "description": "HTTP and MCP servers for Browser Automation Agent",
     "main": "http-server.js",
@@ -12,7 +12,7 @@
     "keywords": [
         "mcp",
         "http",
-        "browser-automation",
+        "winky",
         "agent"
     ],
     "author": "",

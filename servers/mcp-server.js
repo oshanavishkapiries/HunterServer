@@ -42,7 +42,7 @@ let actionLogs = [];
 // Create MCP server
 const server = new Server(
     {
-        name: 'browser-automation',
+        name: 'winky',
         version: '2.0.0'
     },
     {

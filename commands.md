@@ -112,7 +112,7 @@ Add this to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "browser-automation": {
+    "winky": {
       "command": "node",
       "args": ["D:/winky/servers/mcp-server.js"],
       "env": {
@@ -128,7 +128,7 @@ Opencode support one `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "browser-automation": {
+    "winky": {
       "type": "local",
       "enabled": true,
       "command": ["node", "D:/winky/servers/mcp-server.js"],

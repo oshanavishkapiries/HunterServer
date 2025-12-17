@@ -1,5 +1,5 @@
 {
-  "name": "browser-automation-core",
+  "name": "winky-core",
   "version": "1.0.0",
   "description": "Browser automation agent with HTTP and MCP server support",
   "main": "index.js",
@@ -24,7 +24,7 @@
     "tokens",
     "llm",
     "ai",
-    "browser-automation",
+    "winky",
     "gemini",
     "mcp"
   ],
