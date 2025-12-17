@@ -114,7 +114,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "browser-automation": {
       "command": "node",
-      "args": ["D:/project-175/servers/mcp-server.js"],
+      "args": ["D:/winky/servers/mcp-server.js"],
       "env": {
         "CHROME_PATH": "C:/Program Files/Google/Chrome/Application/chrome.exe"
       }
@@ -131,7 +131,7 @@ Opencode support one `claude_desktop_config.json`:
     "browser-automation": {
       "type": "local",
       "enabled": true,
-      "command": ["node", "D:/project-175/servers/mcp-server.js"],
+      "command": ["node", "D:/winky/servers/mcp-server.js"],
       "environment": {
         "CHROME_PATH": "C:/Program Files/Google/Chrome/Application/chrome.exe"
       }
