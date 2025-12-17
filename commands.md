@@ -208,3 +208,33 @@ GEMINI_API_KEY=AIz...
 # Server Ports
 HTTP_PORT=3000
 ```
+
+## 6. Deployment (Docker)
+
+Deploy the entire stack with Docker.
+
+### Build Image
+
+```bash
+docker build -t browser-agent .
+```
+
+### Run Container
+
+Run with your API keys passed as environment variables:
+
+```bash
+docker run -it -p 3000:3000 \
+  -e GEMINI_API_KEY="your_key" \
+  browser-agent
+```
+
+This starts the HTTP server on port 3000 by default.
+
+### Run MCP Server in Docker
+
+```bash
+docker run -i \
+  -e GEMINI_API_KEY="your_key" \
+  browser-agent npm run start:mcp
+```
