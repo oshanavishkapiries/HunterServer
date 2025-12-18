@@ -15,7 +15,7 @@ class BrowserManager {
     constructor(config = {}) {
         const baseDataDir = process.env.DATA_DIR
             ? path.resolve(process.env.DATA_DIR)
-            : path.join(__dirname, '..', '..', 'data');
+            : path.join(__dirname, '..', '..', '..', 'data');
 
         this.config = {
             headless: config.headless ?? false,
