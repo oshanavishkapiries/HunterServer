@@ -42,6 +42,10 @@ class BrowserManager {
         }
 
         // Launch persistent context (saves cookies, history, localStorage)
+
+        // Fix: Patch preferences to prevent "Restore pages?" popup
+        this.fixProfileExitStatus();
+
         // CRITICAL: executablePath must be undefined (not null) if not set to use bundled
         this.context = await chromium.launchPersistentContext(this.config.userDataDir, {
             executablePath: this.config.chromePath || undefined,
@@ -54,7 +58,10 @@ class BrowserManager {
             args: [
                 '--disable-blink-features=AutomationControlled',
                 '--no-first-run',
-                '--no-default-browser-check'
+                '--no-default-browser-check',
+                '--disable-session-crashed-bubble',
+                '--hide-crash-restore-bubble',
+                '--disable-infobars'
             ],
             ignoreDefaultArgs: ['--enable-automation']
         });
@@ -143,6 +150,32 @@ class BrowserManager {
             await this.context.close();
             this.context = null;
             this.page = null;
+        }
+    }
+
+    /**
+     * Patch the Preferences file to prevent crash restore bubble
+     */
+    fixProfileExitStatus() {
+        const preferencesPath = path.join(this.config.userDataDir, 'Default', 'Preferences');
+        try {
+            if (fs.existsSync(preferencesPath)) {
+                const content = fs.readFileSync(preferencesPath, 'utf8');
+                let prefs = JSON.parse(content);
+
+                // Force clean exit status
+                if (prefs.profile) {
+                    prefs.profile.exit_type = 'Normal';
+                    prefs.profile.exited_cleanly = true;
+                    prefs.profile.should_restore_immediately = false;
+                }
+
+                // Write back
+                fs.writeFileSync(preferencesPath, JSON.stringify(prefs, null, 2));
+                // console.log('[BrowserManager] Patched Preferences for clean exit');
+            }
+        } catch (error) {
+            console.error('[BrowserManager] Failed to patch Preferences:', error.message);
         }
     }
 

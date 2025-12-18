@@ -7,7 +7,7 @@ const path = require('path');
 
 class CookieManager {
     constructor(cookiesDir, browserManager) {
-        this.cookiesDir = cookiesDir || path.join(__dirname, '..', 'data', 'cookies');
+        this.cookiesDir = cookiesDir || path.join(__dirname, '..', '..', '..', 'data', 'cookies');
         this.browserManager = browserManager;
     }
 
