@@ -17,6 +17,7 @@
 
 // Core Agent
 const { Agent, AgentFactory } = require('./src/agent/agent');
+const { AgentLoop } = require('./src/agent/agent-loop');
 
 // Managers
 const { BrowserManager } = require('./src/browser/browser-manager');
@@ -107,6 +108,7 @@ module.exports = {
     // Core classes
     Agent,
     AgentFactory,
+    AgentLoop,
 
     // Managers
     BrowserManager,
